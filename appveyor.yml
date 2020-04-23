@@ -2,7 +2,7 @@ build:
  verbosity: detailed
 # we can only support a single visual studio version because the cache is too
 # small to fit multiple vcpkg caches
-image: Visual Studio 2017
+image: Visual Studio 2019
 platform: x64
 branches:
   except:
@@ -17,8 +17,8 @@ environment:
   matrix:
    - PLATFORM: msvc
 #     # APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-   - PLATFORM: cygwin
-   - PLATFORM: mingw
+#   - PLATFORM: cygwin
+#   - PLATFORM: mingw
 # connect via rdp using:
 #    $ xfreerdp /drive:share,/tmp/smb /d:domain /u:appveyor /p:'password' /cert-ignore /v:ipaddr:port
 #init:
@@ -55,14 +55,14 @@ for:
       - cygwin
       - mingw
    # init:
-   # Cannot use this until qt supports it or otherwise the qt debug builds will
-   # miss their dependencies: https://github.com/Microsoft/vcpkg/issues/4866
+   # Cannot use this until boost-fiber supports it:
+   # https://github.com/microsoft/vcpkg/issues/7559
    #  - echo.set(VCPKG_BUILD_TYPE release)>> C:\Tools\vcpkg\triplets\x64-windows.cmake
    build_script:
     - cmd: C:\Python36-x64\python.exe %APPVEYOR_BUILD_FOLDER%\windows\timeout.py 4800 %APPVEYOR_BUILD_FOLDER%\windows\build.cmd %APPVEYOR_BUILD_FOLDER% C:\slam6d
    cache:
-    - c:\tools\vcpkg\installed\
-#cache: c:\tools\vcpkg\installed\ -> appveyor.yml, windows/build.cmd
+    #- c:\tools\vcpkg\installed\
+    - c:\tools\vcpkg\installed\ -> appveyor.yml, windows/build.cmd
 notifications:
   - provider: Email
     to:

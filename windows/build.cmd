@@ -77,9 +77,9 @@ if not exist %sourcedir% (
 
 if not exist "%outdir%" mkdir "%outdir%"
 
-set vcpkgcommit=eccae2adaa20c64a44034a6115c6c5f90be201be
+set vcpkgcommit=2020.04
 set vcpkgurl=https://github.com/Microsoft/vcpkg/archive/!vcpkgcommit!.zip
-set vcpkghash=f9-91-c3-6b-54-d1-c5-79-69-7a-25-79-1b-f3-fa-d6
+set vcpkghash=f8-05-14-11-81-05-67-01-15-89-62-a3-21-fb-a9-91
 set vcpkgzip=%outdir%\vcpkg.zip
 set vcpkgdir=%outdir%\3rdparty\vcpkg
 where vcpkg
@@ -267,7 +267,7 @@ echo "cmake: %cmakeexe%"
 	-DWITH_WXWIDGETS=OFF ^
 	-DWITH_FTGL=OFF ^
 	-DWITH_ROS=OFF ^
-	-G"Visual Studio 15 2017 Win64"
+	-G"Visual Studio 16 2019" -A x64
 
 if %ERRORLEVEL% GEQ 1 (
 	echo cmake config failed
