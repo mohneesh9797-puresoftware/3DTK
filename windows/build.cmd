@@ -1,4 +1,3 @@
-@echo off
 :: this script is to build 3dtk on 64bit windows with visual studio 2017
 :: if you require support for 32bit windows, please send patches
 :: this was tested on Windos 7 64bit
@@ -82,10 +81,14 @@ set vcpkgurl=https://github.com/Microsoft/vcpkg/archive/!vcpkgcommit!.zip
 set vcpkghash=f8-05-14-11-81-05-67-01-15-89-62-a3-21-fb-a9-91
 set vcpkgzip=%outdir%\vcpkg.zip
 set vcpkgdir=%outdir%\3rdparty\vcpkg
-where vcpkg
-:: there is no AND or OR logical operator in windows batch
-if %ERRORLEVEL% NEQ 0 (
+:: echo foo
+:: where vcpkg
+:: echo bar
+:: :: there is no AND or OR logical operator in windows batch
+:: if %ERRORLEVEL% NEQ 0 (
+:: 	echo blub
 	if not exist %vcpkgdir% (
+		echo bla
 		call:reset_error
 		if not exist !vcpkgzip! (
 			echo downloading !vcpkgzip!...
@@ -116,7 +119,19 @@ if %ERRORLEVEL% NEQ 0 (
 			exit /B 1
 		)
 		rmdir "!vcpkgdir!.tmp"
+		:: patch vpkg so that boost-thread and boost-fiber compile
+		:: https://github.com/microsoft/vcpkg/issues/7559
+		:: https://github.com/microsoft/vcpkg/issues/8613
+		:: https://github.com/microsoft/vcpkg/pull/9224
+		echo patching...
+		git apply --unsafe-paths --directory=!vcpkgdir! "%sourcedir%\windows\0001-boost-modular-build-helper-Fix-build-issues-when-rel.patch"
+		echo foo
+		::git apply --directory="!vcpkgdir!" "%sourcedir%/windows/0002-Configure-Jamroot.jam-on-linux.patch"
+		echo.set(VCPKG_BUILD_TYPE release^)>> !vcpkgdir!\triplets\x64-windows.cmake
+		echo vcpkgdir: !vcpkgdir!
+		dir !vcpkgdir!
 		:: have to use call or otherwise bootstrap-vcpkg.bat will exit everything
+		echo building vcpkg...
 		call !vcpkgdir!\bootstrap-vcpkg.bat
 		if !ERRORLEVEL! GEQ 1 (
 			echo bootstrap-vcpkg.bat failed
@@ -124,12 +139,20 @@ if %ERRORLEVEL% NEQ 0 (
 		)
 	)
 	set vcpkgexe=!vcpkgdir!\vcpkg.exe
-) else (
-	:: equivalent of vcpkgexe=$(where vcpkg)
-	for /f %%i in ('where vcpkg') do set vcpkgexe=%%i
-	:: equivalent of vcpkgdir=$(dirname vcpkgexe)
-	for %%F in ("!vcpkgexe!") do set vcpkgdir=%%~dpF
-)
+::) else (
+::	:: equivalent of vcpkgexe=$(where vcpkg)
+::	for /f %%i in ('where vcpkg') do set vcpkgexe=%%i
+::	:: equivalent of vcpkgdir=$(dirname vcpkgexe)
+::	for %%F in ("!vcpkgexe!") do set vcpkgdir=%%~dpF
+::
+::	:: patch vpkg so that boost-thread and boost-fiber compile
+::	:: https://github.com/microsoft/vcpkg/issues/7559
+::	:: https://github.com/microsoft/vcpkg/issues/8613
+::	:: https://github.com/microsoft/vcpkg/pull/9224
+::	echo.set(VCPKG_BUILD_TYPE release^)>> !vcpkgdir!\triplets\x64-windows.cmake
+::	git apply --unsafe-paths --directory=!vcpkgdir! "%sourcedir%\windows\0001-boost-modular-build-helper-Fix-build-issues-when-rel.patch"
+::	::git apply --directory="!vcpkgdir!" "%sourcedir%\windows\0002-Configure-Jamroot.jam-on-linux.patch"
+::)
 
 echo vcpkgexe: %vcpkgexe%
 echo vcpkgdir: %vcpkgdir%
