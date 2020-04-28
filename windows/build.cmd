@@ -1,3 +1,4 @@
+@echo on
 :: this script is to build 3dtk on 64bit windows with visual studio 2017
 :: if you require support for 32bit windows, please send patches
 :: this was tested on Windos 7 64bit
@@ -76,19 +77,19 @@ if not exist %sourcedir% (
 
 if not exist "%outdir%" mkdir "%outdir%"
 
-set vcpkgcommit=2020.04
+:: 2020.04 is not recent enough because of
+:: https://github.com/microsoft/vcpkg/issues/10642
+:: set vcpkgcommit=2020.04
+:: set vcpkghash=f8-05-14-11-81-05-67-01-15-89-62-a3-21-fb-a9-91
+set vcpkgcommit=218e87ca1c89a510a6a91ed72647219734918080
+set vcpkghash=6d-cd-ec-ad-eb-3e-54-d2-08-88-8d-90-70-46-8f-46
 set vcpkgurl=https://github.com/Microsoft/vcpkg/archive/!vcpkgcommit!.zip
-set vcpkghash=f8-05-14-11-81-05-67-01-15-89-62-a3-21-fb-a9-91
 set vcpkgzip=%outdir%\vcpkg.zip
 set vcpkgdir=%outdir%\3rdparty\vcpkg
-:: echo foo
-:: where vcpkg
-:: echo bar
-:: :: there is no AND or OR logical operator in windows batch
-:: if %ERRORLEVEL% NEQ 0 (
-:: 	echo blub
+::where vcpkg
+:::: there is no AND or OR logical operator in windows batch
+::if %ERRORLEVEL% NEQ 0 (
 	if not exist %vcpkgdir% (
-		echo bla
 		call:reset_error
 		if not exist !vcpkgzip! (
 			echo downloading !vcpkgzip!...
@@ -125,14 +126,12 @@ set vcpkgdir=%outdir%\3rdparty\vcpkg
 		:: https://github.com/microsoft/vcpkg/pull/9224
 		echo patching...
 		git apply --unsafe-paths --directory=!vcpkgdir! "%sourcedir%\windows\0001-boost-modular-build-helper-Fix-build-issues-when-rel.patch"
-		echo foo
 		::git apply --directory="!vcpkgdir!" "%sourcedir%/windows/0002-Configure-Jamroot.jam-on-linux.patch"
+		:: don't ask why we need all these carets here...
 		echo.set(VCPKG_BUILD_TYPE release^)>> !vcpkgdir!\triplets\x64-windows.cmake
-		echo vcpkgdir: !vcpkgdir!
-		dir !vcpkgdir!
-		:: have to use call or otherwise bootstrap-vcpkg.bat will exit everything
 		echo building vcpkg...
-		call !vcpkgdir!\bootstrap-vcpkg.bat
+		:: have to use call or otherwise bootstrap-vcpkg.bat will exit everything
+		call !vcpkgdir!\bootstrap-vcpkg.bat -disableMetrics
 		if !ERRORLEVEL! GEQ 1 (
 			echo bootstrap-vcpkg.bat failed
 			exit /B 1
@@ -149,8 +148,9 @@ set vcpkgdir=%outdir%\3rdparty\vcpkg
 ::	:: https://github.com/microsoft/vcpkg/issues/7559
 ::	:: https://github.com/microsoft/vcpkg/issues/8613
 ::	:: https://github.com/microsoft/vcpkg/pull/9224
-::	echo.set(VCPKG_BUILD_TYPE release^)>> !vcpkgdir!\triplets\x64-windows.cmake
 ::	git apply --unsafe-paths --directory=!vcpkgdir! "%sourcedir%\windows\0001-boost-modular-build-helper-Fix-build-issues-when-rel.patch"
+::	:: don't ask why the number of carets here is different from above...
+::	::echo.set(VCPKG_BUILD_TYPE release^)>> !vcpkgdir!\triplets\x64-windows.cmake
 ::	::git apply --directory="!vcpkgdir!" "%sourcedir%\windows\0002-Configure-Jamroot.jam-on-linux.patch"
 ::)
 
@@ -213,7 +213,6 @@ if %ERRORLEVEL% GEQ 1 (
 ) else ( echo vcpkg upgrade succeeded )
 
 %vcpkgexe% --triplet x64-windows install ^
-	qt5 ^
 	libpng ^
 	boost ^
 	opencv ^
