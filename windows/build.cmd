@@ -86,9 +86,9 @@ set vcpkghash=6d-cd-ec-ad-eb-3e-54-d2-08-88-8d-90-70-46-8f-46
 set vcpkgurl=https://github.com/Microsoft/vcpkg/archive/!vcpkgcommit!.zip
 set vcpkgzip=%outdir%\vcpkg.zip
 set vcpkgdir=%outdir%\3rdparty\vcpkg
-::where vcpkg
-:::: there is no AND or OR logical operator in windows batch
-::if %ERRORLEVEL% NEQ 0 (
+where vcpkg
+:: there is no AND or OR logical operator in windows batch
+if %ERRORLEVEL% NEQ 0 (
 	if not exist %vcpkgdir% (
 		call:reset_error
 		if not exist !vcpkgzip! (
@@ -120,42 +120,37 @@ set vcpkgdir=%outdir%\3rdparty\vcpkg
 			exit /B 1
 		)
 		rmdir "!vcpkgdir!.tmp"
-		:: patch vpkg so that boost-thread and boost-fiber compile
-		:: https://github.com/microsoft/vcpkg/issues/7559
-		:: https://github.com/microsoft/vcpkg/issues/8613
-		:: https://github.com/microsoft/vcpkg/pull/9224
-		echo patching...
-		git apply --unsafe-paths --directory=!vcpkgdir! "%sourcedir%\windows\0001-boost-modular-build-helper-Fix-build-issues-when-rel.patch"
-		::git apply --directory="!vcpkgdir!" "%sourcedir%/windows/0002-Configure-Jamroot.jam-on-linux.patch"
-		:: don't ask why we need all these carets here...
-		echo.set(VCPKG_BUILD_TYPE release^)>> !vcpkgdir!\triplets\x64-windows.cmake
-		echo building vcpkg...
-		:: have to use call or otherwise bootstrap-vcpkg.bat will exit everything
-		call !vcpkgdir!\bootstrap-vcpkg.bat -disableMetrics
-		if !ERRORLEVEL! GEQ 1 (
-			echo bootstrap-vcpkg.bat failed
-			exit /B 1
-		)
 	)
 	set vcpkgexe=!vcpkgdir!\vcpkg.exe
-::) else (
-::	:: equivalent of vcpkgexe=$(where vcpkg)
-::	for /f %%i in ('where vcpkg') do set vcpkgexe=%%i
-::	:: equivalent of vcpkgdir=$(dirname vcpkgexe)
-::	for %%F in ("!vcpkgexe!") do set vcpkgdir=%%~dpF
-::
-::	:: patch vpkg so that boost-thread and boost-fiber compile
-::	:: https://github.com/microsoft/vcpkg/issues/7559
-::	:: https://github.com/microsoft/vcpkg/issues/8613
-::	:: https://github.com/microsoft/vcpkg/pull/9224
-::	git apply --unsafe-paths --directory=!vcpkgdir! "%sourcedir%\windows\0001-boost-modular-build-helper-Fix-build-issues-when-rel.patch"
-::	:: don't ask why the number of carets here is different from above...
-::	::echo.set(VCPKG_BUILD_TYPE release^)>> !vcpkgdir!\triplets\x64-windows.cmake
-::	::git apply --directory="!vcpkgdir!" "%sourcedir%\windows\0002-Configure-Jamroot.jam-on-linux.patch"
-::)
+) else (
+	:: equivalent of vcpkgexe=$(where vcpkg)
+	for /f %%i in ('where vcpkg') do set vcpkgexe=%%i
+	:: equivalent of vcpkgdir=$(dirname vcpkgexe)
+	for %%F in ("!vcpkgexe!") do set vcpkgdir=%%~dpF
+
+	git -C !vcpkgdir! pull
+	git -C !vcpkgdir! reset --hard !vcpkgcommi!
+)
 
 echo vcpkgexe: %vcpkgexe%
 echo vcpkgdir: %vcpkgdir%
+
+:: patch vpkg so that boost-thread and boost-fiber compile
+:: https://github.com/microsoft/vcpkg/issues/7559
+:: https://github.com/microsoft/vcpkg/issues/8613
+:: https://github.com/microsoft/vcpkg/pull/9224
+echo patching vcpkg...
+git apply --unsafe-paths --directory=%vcpkgdir% "%sourcedir%\windows\0001-boost-modular-build-helper-Fix-build-issues-when-rel.patch"
+::git apply --directory="%vcpkgdir%" "%sourcedir%/windows/0002-Configure-Jamroot.jam-on-linux.patch"
+:: don't ask why we need all these carets here...
+echo.set(VCPKG_BUILD_TYPE release^)>> %vcpkgdir%\triplets\x64-windows.cmake
+echo building vcpkg...
+:: have to use call or otherwise bootstrap-vcpkg.bat will exit everything
+call %vcpkgdir%\bootstrap-vcpkg.bat -disableMetrics
+if %ERRORLEVEL% GEQ 1 (
+	echo bootstrap-vcpkg.bat failed
+	exit /B 1
+)
 
 set cmakedir=%outdir%\3rdparty\cmake
 
@@ -213,6 +208,7 @@ if %ERRORLEVEL% GEQ 1 (
 ) else ( echo vcpkg upgrade succeeded )
 
 %vcpkgexe% --triplet x64-windows install ^
+	qt5 ^
 	libpng ^
 	boost ^
 	opencv ^

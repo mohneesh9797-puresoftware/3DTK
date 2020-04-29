@@ -2,9 +2,9 @@ build:
  verbosity: detailed
 # we can only support a single visual studio version because the cache is too
 # small to fit multiple vcpkg caches
-#image: Visual Studio 2019
-image: Windows
-build_cloud: DESKTOP-ARHRPBP
+image: Visual Studio 2019
+#image: Windows
+#build_cloud: DESKTOP-ARHRPBP
 platform: x64
 branches:
   except:
@@ -61,8 +61,8 @@ for:
    # https://github.com/microsoft/vcpkg/issues/7559
    #  - echo.set(VCPKG_BUILD_TYPE release)>> C:\Tools\vcpkg\triplets\x64-windows.cmake
    build_script:
-    #- cmd: C:\Python36-x64\python.exe %APPVEYOR_BUILD_FOLDER%\windows\timeout.py 4800 %APPVEYOR_BUILD_FOLDER%\windows\build.cmd %APPVEYOR_BUILD_FOLDER% C:\slam6d
-    - "%APPVEYOR_BUILD_FOLDER%\\windows\\build.cmd %APPVEYOR_BUILD_FOLDER% C:\\slam6d"
+    - cmd: C:\Python36-x64\python.exe %APPVEYOR_BUILD_FOLDER%\windows\timeout.py 4800 %APPVEYOR_BUILD_FOLDER%\windows\build.cmd %APPVEYOR_BUILD_FOLDER% C:\slam6d
+    #- "%APPVEYOR_BUILD_FOLDER%\\windows\\build.cmd %APPVEYOR_BUILD_FOLDER% C:\\slam6d"
    cache:
     #- c:\tools\vcpkg\installed\
     - c:\tools\vcpkg\installed\ -> appveyor.yml, windows/build.cmd
