@@ -10,6 +10,8 @@
 ::    - Visual C++ MFC
 ::    - Visual Studio English Language Pack
 
+:: windows batch induces many headaches... best reference: https://ss64.com/nt/
+
 :: In windows batch, all variables inside an if block or a for loop are
 :: expanded *before* the block is run. This means %variables% cannot be
 :: updated within an if block or for loop. The following allows to use
@@ -24,7 +26,7 @@ setlocal ENABLEDELAYEDEXPANSION
 set sourcedir=%~1
 
 if "%sourcedir%" == "" (
-	echo "Usage: %0 sourcedir outdir"
+	echo "Usage: %0 sourcedir outdir [v14x]"
 	exit /B 1
 )
 
@@ -32,9 +34,27 @@ if "%sourcedir%" == "" (
 set outdir=%~2
 
 if "%outdir%" == "" (
-	echo "Usage: %0 sourcedir outdir"
+	echo "Usage: %0 sourcedir outdir [v14x]"
 	exit /B 1
 ) else ( echo outdir: %outdir% )
+
+:: there is no elsif in windows batch
+set toolset=%~3
+if "%toolset%" == "" (
+	set "generator=Visual Studio 16 2019"
+	set "triplet=x64-windows-v141"
+)
+if "%toolset%" == "v141" (
+	set "generator=Visual Studio 16 2017"
+	set "triplet=x64-windows-v141"
+)
+if "%toolset%" == "v142" (
+	set "generator=Visual Studio 16 2017"
+	set "triplet=x64-windows-v142"
+)
+:: we would like to abort if the third argument is anything other than the
+:: empty string or the allowed toolset values, but without elsif and without
+:: AND operator, we just give up...
 
 :: the build type (one of Debug, Release, RelWithDebInfo and MinSizeRel)
 set buildtype=Release
@@ -142,8 +162,9 @@ echo vcpkgdir: %vcpkgdir%
 echo patching vcpkg...
 git apply --unsafe-paths --directory=%vcpkgdir% "%sourcedir%\windows\0001-boost-modular-build-helper-Fix-build-issues-when-rel.patch"
 ::git apply --directory="%vcpkgdir%" "%sourcedir%/windows/0002-Configure-Jamroot.jam-on-linux.patch"
-:: don't ask why we need all these carets here...
-echo.set(VCPKG_BUILD_TYPE release^)>> %vcpkgdir%\triplets\x64-windows.cmake
+echo copy triplets...
+copy "%sourcedir%\windows\x64-windows-v141.cmake" "%vcpkgdir%\triplets\x64-windows-v141.cmake"
+copy "%sourcedir%\windows\x64-windows-v142.cmake" "%vcpkgdir%\triplets\x64-windows-v142.cmake"
 echo building vcpkg...
 :: have to use call or otherwise bootstrap-vcpkg.bat will exit everything
 call %vcpkgdir%\bootstrap-vcpkg.bat -disableMetrics
@@ -207,7 +228,7 @@ if %ERRORLEVEL% GEQ 1 (
 	exit /B 1
 ) else ( echo vcpkg upgrade succeeded )
 
-%vcpkgexe% --triplet x64-windows install ^
+%vcpkgexe% --triplet %triplet% install ^
 	qt5 ^
 	libpng ^
 	boost ^
@@ -285,7 +306,8 @@ echo "cmake: %cmakeexe%"
 	-DWITH_WXWIDGETS=OFF ^
 	-DWITH_FTGL=OFF ^
 	-DWITH_ROS=OFF ^
-	-G"Visual Studio 16 2019" -A x64
+	-G"%generator%" ^
+	-A x64
 
 if %ERRORLEVEL% GEQ 1 (
 	echo cmake config failed

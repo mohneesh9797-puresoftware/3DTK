@@ -1,8 +1,8 @@
 build:
  verbosity: detailed
-# we can only support a single visual studio version because the cache is too
-# small to fit multiple vcpkg caches
-image: Visual Studio 2019
+image:
+  - Visual Studio 2017 # v141
+  - Visual Studio 2019 # v142
 #image: Windows
 #build_cloud: DESKTOP-ARHRPBP
 platform: x64
@@ -17,10 +17,10 @@ branches:
    - apple
 environment:
   matrix:
-   - PLATFORM: msvc
-#     # APPVEYOR_BUILD_WORKER_IMAGE: Visual Studio 2017
-#   - PLATFORM: cygwin
-#   - PLATFORM: mingw
+   - PLATFORM: v141
+   - PLATFORM: v142
+   - PLATFORM: cygwin
+   - PLATFORM: mingw
 # connect via rdp using:
 #    $ xfreerdp /drive:share,/tmp/smb /d:domain /u:appveyor /p:'password' /cert-ignore /v:ipaddr:port
 #init:
@@ -34,6 +34,8 @@ for:
    branches:
      except:
       - msvc
+      - v141
+      - v142
       - mingw
    build_script:
     - cmd: "%APPVEYOR_BUILD_FOLDER%\\windows\\cygwin.cmd"
@@ -43,6 +45,8 @@ for:
    branches:
      except:
       - msvc
+      - v141
+      - v142
       - cygwin
    build_script:
     - cmd: "%APPVEYOR_BUILD_FOLDER%\\windows\\mingw.cmd"
@@ -51,21 +55,38 @@ for:
    # - C:\msys64\var\cache\pacman\pkg\
  - matrix:
      only:
-      - PLATFORM: msvc
+      - PLATFORM: v141
    branches:
      except:
       - cygwin
       - mingw
-   # init:
-   # Cannot use this until boost-fiber supports it:
-   # https://github.com/microsoft/vcpkg/issues/7559
-   #  - echo.set(VCPKG_BUILD_TYPE release)>> C:\Tools\vcpkg\triplets\x64-windows.cmake
+      - v142
    build_script:
-    - cmd: C:\Python36-x64\python.exe %APPVEYOR_BUILD_FOLDER%\windows\timeout.py 4800 %APPVEYOR_BUILD_FOLDER%\windows\build.cmd %APPVEYOR_BUILD_FOLDER% C:\slam6d
-    #- "%APPVEYOR_BUILD_FOLDER%\\windows\\build.cmd %APPVEYOR_BUILD_FOLDER% C:\\slam6d"
+    - cmd: C:\Python36-x64\python.exe %APPVEYOR_BUILD_FOLDER%\windows\timeout.py 4800 %APPVEYOR_BUILD_FOLDER%\windows\build.cmd %APPVEYOR_BUILD_FOLDER% C:\slam6d v141
    cache:
-    #- c:\tools\vcpkg\installed\
     - c:\tools\vcpkg\installed\ -> appveyor.yml, windows/build.cmd
+ - matrix:
+     only:
+      - PLATFORM: v142
+   branches:
+     except:
+      - cygwin
+      - mingw
+      - v141
+   build_script:
+    - cmd: C:\Python36-x64\python.exe %APPVEYOR_BUILD_FOLDER%\windows\timeout.py 4800 %APPVEYOR_BUILD_FOLDER%\windows\build.cmd %APPVEYOR_BUILD_FOLDER% C:\slam6d v142
+   cache:
+    - c:\tools\vcpkg\installed\ -> appveyor.yml, windows/build.cmd
+matrix:
+  exclude:
+   - image: Visual Studio 2017
+     PLATFORM: cygwin
+   - image: Visual Studio 2017
+     PLATFORM: mingw
+   - image: Visual Studio 2017
+     PLATFORM: v142
+   - image: Visual Studio 2019
+     PLATFORM: v141
 notifications:
   - provider: Email
     to:
