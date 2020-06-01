@@ -32,15 +32,13 @@ jobs:
         - docker
       env:
         - DERIV=debian DIST=sid CC=clang
+    - os: linux
+      arch: arm64
+      services:
+        - docker
+      env:
+        - DERIV=debian DIST=sid CC=clang
   include:
-    - os: osx
-      osx_image: xcode11.3
-      before_cache:
-        - brew cleanup
-      cache:
-        directories:
-        - $HOME/Library/Caches/Homebrew
-      if: branch NOT IN (ubuntu, debian, linux)
     - os: linux
       arch: arm64
       services:
@@ -63,7 +61,21 @@ jobs:
         - DERIV=debian DIST=sid CC=clang
       if: branch NOT IN (macos, osx, apple, ubuntu)
     - os: linux
+      arch: arm64
+      services:
+        - docker
+      env:
+        - DERIV=debian DIST=sid CC=clang
+      if: branch NOT IN (macos, osx, apple, ubuntu)
+    - os: linux
       arch: amd64
+      services:
+        - docker
+      env:
+        - DERIV=debian DIST=buster
+      if: branch NOT IN (macos, osx, apple, ubuntu)
+      - os: linux
+      arch: arm64
       services:
         - docker
       env:
@@ -77,12 +89,27 @@ jobs:
         - DERIV=debian DIST=bullseye
       if: branch NOT IN (macos, osx, apple, ubuntu)
     - os: linux
+      arch: arm64
+      services:
+        - docker
+      env:
+        - DERIV=debian DIST=bullseye
+      if: branch NOT IN (macos, osx, apple, ubuntu)
+    - os: linux
       arch: amd64
       services:
         - docker
       env:
         - DERIV=debian DIST=stretch
       if: branch NOT IN (macos, osx, apple, ubuntu)
+    - os: linux
+      arch: arm64
+      services:
+        - docker
+      env:
+        - DERIV=debian DIST=stretch
+      if: branch NOT IN (macos, osx, apple, ubuntu)
+     
     - os: linux
       arch: amd64
       services:
@@ -91,7 +118,21 @@ jobs:
         - DERIV=ubuntu DIST=xenial
       if: branch NOT IN (macos, osx, apple, debian)
     - os: linux
+      arch: arm64
+      services:
+        - docker
+      env:
+        - DERIV=ubuntu DIST=xenial
+      if: branch NOT IN (macos, osx, apple, debian)
+    - os: linux
       arch: amd64
+      services:
+        - docker
+      env:
+        - DERIV=ubuntu DIST=bionic
+      if: branch NOT IN (macos, osx, apple, debian)
+    - os: linux
+      arch: arm64
       services:
         - docker
       env:
