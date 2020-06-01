@@ -74,7 +74,7 @@ jobs:
       env:
         - DERIV=debian DIST=buster
       if: branch NOT IN (macos, osx, apple, ubuntu)
-      - os: linux
+    - os: linux
       arch: arm64
       services:
         - docker
